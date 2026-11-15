@@ -1,0 +1,630 @@
+/* 透明窗口，无边框 */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 220px;
+    height: 340px;
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* 容器 */
+#pet-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 8px;
+}
+
+/* ==================== 气泡层（奶龙头上，往上叠） ==================== */
+#bubble-stack {
+    position: absolute;
+    bottom: 150px; /* 奶龙头顶上方，不挡角色 */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 150px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.msg-bubble {
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 14px;
+    padding: 6px 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    max-width: 140px;
+    text-align: center;
+    word-break: break-all;
+    animation: bubble-pop 0.3s ease;
+    position: relative;
+}
+
+.msg-bubble.user {
+    background: #4CAF50;
+    color: #fff;
+    border-color: #2E7D32;
+}
+
+/* 最底下的气泡（最新的）带向下尖角指向奶龙 */
+.msg-bubble:last-child::after {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #fff;
+}
+
+.msg-bubble.user:last-child::after {
+    border-top-color: #4CAF50;
+}
+
+@keyframes bubble-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.msg-bubble.fade-out {
+    animation: bubble-fade 1.5s ease forwards;
+}
+@keyframes bubble-fade {
+    to { opacity: 0; transform: translateY(-8px) scale(0.9); }
+}
+
+/* ==================== 确认卡片（写/命令类动手前问过主人） ==================== */
+#confirm-layer {
+    position: absolute;
+    bottom: 142px; /* 奶龙头顶上方 */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 60;
+}
+.confirm-card {
+    background: #23262d;
+    color: #fff;
+    border-radius: 12px;
+    padding: 9px 10px;
+    font-size: 12px;
+    line-height: 1.3;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    word-break: break-all;
+    animation: bubble-pop 0.3s ease;
+    pointer-events: auto;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.confirm-card.fading {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.92);
+}
+.cc-title {
+    font-weight: bold;
+    color: #ffd75e;
+}
+.cc-desc {
+    color: #e6e6e6;
+    font-size: 11px;
+}
+.cc-btns {
+    display: flex;
+    gap: 6px;
+    margin-top: 5px;
+}
+.confirm-btn {
+    flex: 1;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 4px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.15s;
+    color: #fff;
+}
+.confirm-btn:hover { transform: translateY(-2px); }
+.confirm-btn:active { transform: scale(0.9); }
+.confirm-btn.yes { background: #2f7d38; }
+.confirm-btn.yes:hover { background: #358a41; }
+.confirm-btn.no { background: #b23a3a; }
+.confirm-btn.no:hover { background: #c54545; }
+
+/* ==================== 奶龙本体（拖动手柄） ==================== */
+#pet-body {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    cursor: grab;
+    z-index: 40;
+}
+
+#pet-body:active {
+    cursor: grabbing;
+}
+
+#pet {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+    animation: idle-sway 3s ease-in-out infinite;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    user-drag: none;
+    user-select: none;
+}
+
+/* 存在感低时变淡 */
+#pet.faint {
+    opacity: 0.3;
+}
+
+/* 动图播放时：APNG 自己动，不叠加 CSS 摇摆/弹跳等动画 */
+#pet.anim-playing {
+    animation: none;
+}
+
+/* 空闲时轻微晃动 */
+@keyframes idle-sway {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+}
+
+/* 跳舞状态 */
+#pet.dancing {
+    animation: dance-bounce 0.3s ease-in-out infinite;
+}
+@keyframes dance-bounce {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-8px) rotate(5deg); }
+}
+
+/* 大笑状态 */
+#pet.laughing {
+    animation: laugh-shake 0.15s ease-in-out infinite;
+}
+@keyframes laugh-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px) rotate(-3deg); }
+    75% { transform: translateX(3px) rotate(3deg); }
+}
+
+/* 变形状态 */
+#pet.deformed {
+    animation: deform-wobble 0.4s ease-in-out infinite;
+}
+@keyframes deform-wobble {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    33% { transform: scale(1.1, 0.9) rotate(-5deg); }
+    66% { transform: scale(0.9, 1.1) rotate(5deg); }
+}
+
+/* ==================== 悬浮工具栏（奶龙左右各一列，每列 2 个竖排） ====================
+   设计要点：按钮贴窗边摆放、不过奶龙、不压奶龙——两列 x2~29（奶龙左边 62px 起）
+   与 x191~218（奶龙右边到 158px 止），竖排 2×28px+2px 间距，垂直居中于奶龙本体。*/
+.pet-btn-col {
+    position: absolute;
+    top: 218px;   /* 垂直居中于奶龙本体（本体 ~96px，约占 y199~295） */
+    display: grid;
+    grid-template-columns: 28px;
+    grid-template-rows: 28px 28px;
+    row-gap: 2px;
+    z-index: 45;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.pet-btn-col.left {
+    left: 2px;
+}
+
+.pet-btn-col.right {
+    right: 2px;
+    top: 205px;
+    grid-template-rows: 28px 28px 28px;
+}
+
+/* 鼠标离开奶龙附近 5 秒后自动隐藏（左右两列一起） */
+.pet-btn-col.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pet-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: none;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.pet-btn:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 9px rgba(0, 0, 0, 0.3);
+}
+
+.pet-btn:active {
+    transform: scale(0.92);
+}
+
+.pet-btn.history { background: #4CAF50; }
+/* 👀 看屏幕：琥珀底 + 白圈 + 圆形，一眼区别于 💬/≡/× 这类功能按钮 */
+.pet-btn.eye {
+    background: #FFB300;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.45);
+}
+/* 等待屏幕回复期间：变暗 + 不可点 */
+.pet-btn.eye.busy {
+    background: #8a6d00;
+    border-color: #ffe082;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+    cursor: progress;
+}
+.pet-btn.eye.busy:hover { transform: none; }
+.pet-btn.chat { background: #00BCD4; }
+.pet-btn.settings { background: #673AB7; }
+.pet-btn.close { background: #757575; font-size: 13px; }
+
+/* ==================== 面板通用样式（可拖动标题栏 + 可缩放右下角） ==================== */
+.pet-panel {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.97);
+    border: 2px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    display: none;
+    flex-direction: column;
+    box-sizing: border-box;
+    overflow: hidden;
+    z-index: 50;  /* 高于奶龙本体(40)，面板显示在角色前面 */
+    cursor: move;
+    user-select: none;
+}
+
+.pet-panel input, .pet-panel select {
+    cursor: text;
+}
+
+.pet-panel button {
+    cursor: pointer;
+}
+
+.pet-panel.show {
+    display: flex;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    border-bottom: 1px solid #eee;
+    cursor: move;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.panel-resize {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 18px;
+    height: 18px;
+    cursor: nwse-resize;
+    background:
+        linear-gradient(135deg, transparent 50%, #666 50%),
+        linear-gradient(225deg, transparent 50%, #666 50%);
+    z-index: 5;
+}
+
+/* ==================== 历史对话框面板 ==================== */
+#history-panel {
+    width: 150px;
+    height: 128px;
+}
+
+#history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    font-size: 12px;
+}
+
+#history-list::-webkit-scrollbar {
+    width: 4px;
+}
+#history-list::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 2px;
+}
+
+.history-item {
+    padding: 3px 6px;
+    margin: 2px 0;
+    border-radius: 8px;
+    word-break: break-all;
+    line-height: 1.3;
+}
+
+.history-item.user {
+    background: #4CAF50;
+    color: #fff;
+    text-align: right;
+}
+
+.history-item.pet {
+    background: #eee;
+    color: #333;
+}
+
+.history-empty {
+    color: #999;
+    text-align: center;
+    padding: 12px 4px;
+}
+
+/* ==================== 提醒面板 ==================== */
+#reminder-panel {
+    width: 168px;
+    height: 200px;
+}
+
+#reminder-close {
+    border: none;
+    background: none;
+    font-size: 12px;
+    cursor: pointer;
+    color: #999;
+}
+
+#reminder-input-row {
+    display: flex;
+    padding: 6px;
+    gap: 4px;
+}
+
+#reminder-text {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 11px;
+    outline: none;
+}
+
+#reminder-delay {
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 11px;
+    padding: 4px;
+    background: #fff;
+}
+
+#reminder-add-row {
+    padding: 0 6px 4px;
+}
+
+#reminder-add {
+    width: 100%;
+    padding: 4px;
+    border: none;
+    border-radius: 10px;
+    background: #F44336;
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+#reminder-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.reminder-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 3px 0;
+    border-bottom: 1px solid #f5f5f5;
+    word-break: break-all;
+}
+
+.reminder-item .due {
+    color: #999;
+    font-size: 9px;
+    white-space: nowrap;
+}
+
+.reminder-item .del {
+    border: none;
+    background: none;
+    color: #d32f2f;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 0;
+}
+
+.reminder-empty {
+    color: #999;
+    text-align: center;
+    padding: 12px 4px;
+}
+
+/* ==================== 速记面板 ==================== */
+#notes-panel {
+    width: 168px;
+    height: 200px;
+}
+
+#notes-close {
+    border: none;
+    background: none;
+    font-size: 12px;
+    cursor: pointer;
+    color: #999;
+}
+
+#notes-input-row {
+    display: flex;
+    padding: 6px;
+    gap: 4px;
+}
+
+#notes-text {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 11px;
+    outline: none;
+}
+
+#notes-add {
+    border: none;
+    border-radius: 10px;
+    background: #2196F3;
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+#notes-summarize-row {
+    padding: 0 6px 4px;
+}
+
+#notes-summarize {
+    width: 100%;
+    padding: 4px;
+    border: 1px dashed #2196F3;
+    border-radius: 10px;
+    background: #fff;
+    color: #2196F3;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+#notes-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.note-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 3px 0;
+    border-bottom: 1px solid #f5f5f5;
+    word-break: break-all;
+}
+
+.note-item .time {
+    color: #999;
+    font-size: 9px;
+    white-space: nowrap;
+}
+
+.note-item .del {
+    border: none;
+    background: none;
+    color: #d32f2f;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 0;
+}
+
+.note-summary {
+    background: #e3f2fd;
+    color: #1565c0;
+    border-radius: 8px;
+    padding: 4px 6px;
+    margin: 4px 0;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.notes-empty {
+    color: #999;
+    text-align: center;
+    padding: 12px 4px;
+}
+
+/* ==================== Agent 面板快捷指令 ==================== */
+#agent-quick-row {
+    display: flex;
+    padding: 4px 8px 2px;
+    gap: 4px;
+}
+
+/* ==================== 输入框（点击后显现） ==================== */
+#input-area {
+    display: flex;
+    margin-top: 6px;
+    width: 96px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+}
+
+#input-area.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+#input-area input {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 10px;
+    border: 2px solid #333;
+    border-radius: 16px;
+    outline: none;
+    font-size: 13px;
+}

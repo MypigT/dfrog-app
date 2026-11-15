@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>桌宠 · 对话模式</title>
+    <link rel="stylesheet" href="chat.css">
+</head>
+<body>
+    <!-- 窗口标题栏：整条可拖动，📌 置顶开关，✕ 关闭（关窗=退出对话模式回桌宠） -->
+    <div id="chat-head">
+        <span class="chat-title">🐲 桌宠 · 对话模式</span>
+        <button id="mute-btn" class="chat-icon" title="静音开关">🔊</button>
+        <button id="chat-top-btn" title="置顶开关">📌</button>
+        <button id="chat-close-btn" title="回到桌宠模式">✕</button>
+    </div>
+
+    <!-- 左 sidebar(奶龙图片 + 切换按钮) / 右 stage(对话视图 + 功能视图)。
+         和桌宠模式共用同一份消息数据(服务端 /history/list)，只是显示方式不同；
+         互动与对话是一个整体：桌宠模式气泡展示，对话模式对话框展示，历史一份；
+         对话模式不弹桌宠气泡，奶龙说话全部进对话视图。 -->
+    <div id="mode-root">
+        <!-- 左侧边栏 -->
+        <aside id="sidebar">
+            <div id="pet-stage" title="点一下/双击/长按 和桌宠玩">
+                <img id="pet-img" src="../assets/common.jpg" alt="桌宠" draggable="false" style="visibility:hidden">
+            </div>
+
+            <nav id="nav">
+                <button class="nav-btn active" data-view="chat">💬 对话<span class="badge" id="chat-badge"></span></button>
+                <button class="nav-btn" data-view="agent">🤖 智能体</button>
+                <button class="nav-btn" data-view="reminder">⏰ 提醒</button>
+                <button class="nav-btn" data-view="notes">📝 速记</button>
+                <button class="nav-btn" data-view="petimg">🐲 桌宠形象</button>
+            </nav>
+            <div class="action-area">
+                <button id="eye-btn" class="action-btn" title="看看屏幕">👀 看屏幕</button>
+            </div>
+
+            <div class="sidebar-bottom">
+                <button id="settings-btn" class="sidebar-icon" title="设置">⚙️</button>
+                <button id="exit-mode" title="收起大窗口，回到桌宠">↩ 返回桌宠模式</button>
+            </div>
+        </aside>
+
+        <!-- 右侧主区域：视图切换（对话视图即完整历史流，不再单独的「历史」按钮） -->
+        <main id="stage">
+            <!-- 对话视图（默认）：加载最近 120 条完整历史 + 流式对话 + 口令 -->
+            <section id="view-chat" class="view">
+                <div id="session-bar" class="session-bar">
+                    <button id="session-new-btn" class="session-btn" title="新建会话">＋ 新会话</button>
+                    <select id="session-select" class="session-select" title="切换会话"></select>
+                    <button id="session-del-btn" class="session-btn session-del" title="删除当前会话">🗑</button>
+                </div>
+                <div id="chat-messages"></div>
+                <div id="chat-input-row">
+                    <div id="rag-bar" class="rag-bar">
+                        <button id="rag-upload-btn" class="rag-btn" title="上传文档（PDF/TXT/MD）">📄</button>
+                        <input type="file" id="rag-file-input" accept=".pdf,.txt,.md" hidden>
+                        <span id="rag-doc-status" class="rag-status">未加载文档</span>
+                        <div id="rag-progress" class="rag-progress" hidden></div>
+                        <div class="rag-mode">
+                            <button id="rag-mode-ask" class="rag-mode-btn on" data-mode="ask">问答</button>
+                            <button id="rag-mode-quiz" class="rag-mode-btn" data-mode="quiz">出题</button>
+                        </div>
+                        <button id="rag-clear-btn" class="rag-btn" title="清除文档" hidden>✕</button>
+                    </div>
+                    <input type="text" id="chat-input" placeholder="说点什么给桌宠..." autocomplete="off">
+                    <button id="chat-send-btn" title="发送">➤</button>
+                </div>
+            </section>
+
+            <!-- 功能视图：对话窗口内的原生实现（专门设计，不嵌桌宠的 panel.html 小窗），
+                 视觉语言与对话视图一致：白卡片、圆角、绿色主按钮，铺满整个 stage。 -->
+            <section id="view-agent" class="view panel-view">
+                <div class="pv-head">
+                    <span class="pv-title">🤖 工具台</span>
+                    <span class="pv-sub">填参数点执行，结果直接显示</span>
+                    <div class="pv-config" data-feature="agent"></div>
+                </div>
+                <div class="pv-hint">读类工具与生活助手直接调用，不经大模型、不耗 token；写文件 / 跑命令等需在对话里经你确认。</div>
+
+                <div class="qt-cat">文件工具</div>
+                <div class="tool-card" data-tool="list_files">
+                    <div class="tc-head"><span class="qt-icon">📁</span><span class="tc-title">看目录</span></div>
+                    <div class="tc-desc">列出文件夹里的文件和子目录</div>
+                    <div class="tc-form">
+                        <input type="text" class="tc-input" data-field="dir" placeholder="目录路径（留空=默认工作目录）">
+                        <button class="tc-btn">查看</button>
+                    </div>
+                    <div class="tc-result"></div>
+                </div>
+                <div class="tool-card" data-tool="read_file">
+                    <div class="tc-head"><span class="qt-icon">📖</span><span class="tc-title">读文件</span></div>
+                    <div class="tc-desc">读取文本文件内容（最多 4000 字）</div>
+                    <div class="tc-form">
+                        <input type="text" class="tc-input" data-field="path" placeholder="文件路径（绝对或相对工作目录）">
+                        <button class="tc-btn">读取</button>
+                    </div>
+                    <div class="tc-result"></div>
+                </div>
+                <div class="tool-card" data-tool="search_files">
+                    <div class="tc-head"><span class="qt-icon">🔍</span><span class="tc-title">搜文件</span></div>
+                    <div class="tc-desc">按文件名关键字找文件</div>
+                    <div class="tc-form">
+                        <input type="text" class="tc-input" data-field="keyword" placeholder="文件名关键字">
+                        <input type="text" class="tc-input" data-field="dir" placeholder="搜索目录（留空=默认）">
+                        <button class="tc-btn">搜索</button>
+                    </div>
+                    <div class="tc-result"></div>
+                </div>
+                <div class="tool-card" data-tool="content_search">
+                    <div class="tc-head"><span class="qt-icon">🔎</span><span class="tc-title">搜内容</span></div>
+                    <div class="tc-desc">在文本文件里全文搜关键字</div>
+                    <div class="tc-form">
+                        <input type="text" class="tc-input" data-field="keyword" placeholder="内容关键字">
+                        <input type="text" class="tc-input" data-field="dir" placeholder="搜索目录（留空=默认）">
+                        <button class="tc-btn">搜索</button>
+                    </div>
+                    <div class="tc-result"></div>
+                </div>
+
+                <div class="qt-cat">系统与生活</div>
+                <div class="tool-card" data-tool="get_current_time">
+                    <div class="tc-head"><span class="qt-icon">🕐</span><span class="tc-title">查时间</span></div>
+                    <div class="tc-desc">查当前日期时间</div>
+                    <div class="tc-form">
+                        <button class="tc-btn">查询</button>
+                    </div>
+                    <div class="tc-result"></div>
+                </div>
+                <div class="tool-card" data-tool="add_reminder">
+                    <div class="tc-head"><span class="qt-icon">⏰</span><span class="tc-title">设提醒</span></div>
+                    <div class="tc-desc">设定时提醒，到点桌宠会喊你</div>
+                    <div class="tc-form">
+                        <input type="text" class="tc-input" data-field="text" placeholder="提醒内容">
+                        <select class="tc-input" data-field="delay_seconds">
+                            <option value="60">1分</option>
+                            <option value="300" selected>5分</option>
+                            <option value="600">10分</option>
+                            <option value="1800">30分</option>
+                            <option value="3600">1小时</option>
+                        </select>
+                        <button class="tc-btn">添加</button>
+                    </div>
+                    <div class="tc-result"></div>
+                </div>
+                <div class="tool-card" data-tool="add_note">
+                    <div class="tc-head"><span class="qt-icon">📝</span><span class="tc-title">记速记</span></div>
+                    <div class="tc-desc">记一条备忘，随时查看整理</div>
+                    <div class="tc-form">
+                        <input type="text" class="tc-input" data-field="text" placeholder="速记内容">
+                        <button class="tc-btn">保存</button>
+                    </div>
+                    <div class="tc-result"></div>
+                </div>
+
+                <div class="qt-cat">感知</div>
+                <div class="tool-card" data-tool="look_at_screen">
+                    <div class="tc-head"><span class="qt-icon">👀</span><span class="tc-title">看屏幕</span></div>
+                    <div class="tc-desc">看一眼屏幕，基于真实画面评论</div>
+                    <div class="tc-form">
+                        <button class="tc-btn">看一眼</button>
+                    </div>
+                    <div class="tc-result"></div>
+                </div>
+
+                <div class="pv-hint" style="margin-top:10px;">⚙️ 写文件 / 改文件 / 移动 / 改名 / 删除 / 跑命令属写类操作，在对话里说一声、经你确认后执行。</div>
+            </section>
+
+            <section id="view-reminder" class="view panel-view">
+                <div class="pv-head">
+                    <span class="pv-title">⏰ 提醒</span>
+                    <span class="pv-sub">到点桌宠会喊你</span>
+                    <div class="pv-config" data-feature="reminder"></div>
+                </div>
+                <div class="pv-card">
+                    <div class="pv-row">
+                        <input type="text" id="reminder-text" class="pv-input" placeholder="提醒什么？" autocomplete="off">
+                        <select id="reminder-delay">
+                            <option value="60">1分</option>
+                            <option value="300" selected>5分</option>
+                            <option value="600">10分</option>
+                            <option value="1800">30分</option>
+                            <option value="3600">1小时</option>
+                        </select>
+                    </div>
+                    <div class="pv-add-row">
+                        <button id="reminder-add" class="pv-primary">➕ 添加</button>
+                    </div>
+                </div>
+                <div id="reminder-list"></div>
+            </section>
+
+            <section id="view-notes" class="view panel-view">
+                <div class="pv-head">
+                    <span class="pv-title">📝 速记</span>
+                    <span class="pv-sub">随手记，稍后整理</span>
+                    <div class="pv-config" data-feature="notes"></div>
+                </div>
+                <div class="pv-card">
+                    <div class="pv-row">
+                        <input type="text" id="notes-text" class="pv-input" placeholder="记点什么..." autocomplete="off">
+                        <button id="notes-add" class="pv-primary" title="保存">➕</button>
+                    </div>
+                </div>
+                <div class="pv-row" style="justify-content:flex-end;">
+                    <button id="notes-summarize" class="pv-flat">✨ AI整理</button>
+                </div>
+                <div id="notes-list"></div>
+            </section>
+
+            <section id="view-petimg" class="view panel-view">
+                <div class="pv-head">
+                    <span class="pv-title">🐲 桌宠形象</span>
+                    <span class="pv-sub">一个素材文件夹 = 一个形象，里面文件 = 动作</span>
+                    <div class="pv-config" data-feature="petimg"></div>
+                </div>
+                <div class="pv-card">
+                    <div class="pv-row">
+                        <input type="file" id="petimg-folder-input" webkitdirectory multiple hidden>
+                        <button id="petimg-folder-upload" class="pv-primary">📁 上传文件夹</button>
+                        <input type="file" id="petimg-file" accept="image/*" hidden>
+                        <button id="petimg-upload" class="pv-flat">🖼 单图上传</button>
+                        <button id="petimg-new" class="pv-flat">＋ 新建形象</button>
+                        <button id="petimg-gen" class="pv-flat" disabled>✨ AI生成动作</button>
+                    </div>
+                    <div class="pv-hint" id="petimg-hint">上传一个素材文件夹（多张 gif 各成一个动作，按文件名排序对应槽位）</div>
+                </div>
+                <div class="pv-row" id="petimg-preview-row">
+                    <img id="petimg-preview" class="petimg-preview" alt="预览">
+                    <span class="pv-hint" id="petimg-preview-name"></span>
+                </div>
+                <div id="petimg-list"></div>
+                <div id="petimg-detail" hidden>
+                    <div class="pv-row petimg-detail-bar">
+                        <button id="petimg-back" class="pv-flat">← 返回</button>
+                        <input type="text" id="petimg-rename-input" class="pv-input" placeholder="形象名">
+                        <button id="petimg-rename-btn" class="pv-flat">重命名</button>
+                        <button id="petimg-activate" class="pv-flat">设为当前</button>
+                        <button id="petimg-del" class="pi-del">删除形象</button>
+                    </div>
+                    <div class="pv-card petimg-meta-card">
+                        <div class="pv-row">
+                            <input type="text" id="petimg-role-input" class="pv-input" placeholder="角色名（如：小助手、小龙）">
+                        </div>
+                        <div class="pv-row" style="align-items:flex-start;">
+                            <textarea id="petimg-prompt-input" class="pv-input petimg-prompt" rows="3" placeholder="提示词：塑造这个形象的对话人设（性格、说话风格、设定等）"></textarea>
+                        </div>
+                        <div class="pv-row" style="justify-content:flex-end;">
+                            <button id="petimg-meta-save" class="pv-primary">💾 保存人设</button>
+                        </div>
+                    </div>
+                    <div class="pv-row">
+                        <input type="file" id="petimg-action-input" accept="image/*" multiple hidden>
+                        <button id="petimg-action-add" class="pv-flat">＋ 追加动作</button>
+                        <span class="pv-hint">动作按顺序对应：待机 / 跳舞 / 笑 / 变形</span>
+                    </div>
+                    <div id="petimg-actions"></div>
+                </div>
+            </section>
+
+            <section id="view-settings" class="view panel-view">
+                <div class="pv-head">
+                    <span class="pv-title">⚙️ 设置</span>
+                    <span class="pv-sub">常用开关，自动保存</span>
+                </div>
+                <div class="settings-list">
+                    <label class="setting-item">
+                        <div class="si-text">
+                            <div class="si-name">开机自启动</div>
+                            <div class="si-desc">开机自动启动桌宠</div>
+                        </div>
+                        <input type="checkbox" id="set-auto_start" class="switch">
+                    </label>
+                    <label class="setting-item">
+                        <div class="si-text">
+                            <div class="si-name">静音</div>
+                            <div class="si-desc">关闭齁齁齁音效</div>
+                        </div>
+                        <input type="checkbox" id="set-mute" class="switch">
+                    </label>
+                    <label class="setting-item">
+                        <div class="si-text">
+                            <div class="si-name">流式输出</div>
+                            <div class="si-desc">对话逐字流式显示</div>
+                        </div>
+                        <input type="checkbox" id="set-stream_output" class="switch">
+                    </label>
+                    <label class="setting-item">
+                        <div class="si-text">
+                            <div class="si-name">主动互动</div>
+                            <div class="si-desc">定时主动搭话</div>
+                        </div>
+                        <input type="checkbox" id="set-proactive" class="switch">
+                    </label>
+                    <label class="setting-item">
+                        <div class="si-text">
+                            <div class="si-name">对话窗置顶</div>
+                            <div class="si-desc">本对话窗口始终置顶</div>
+                        </div>
+                        <input type="checkbox" id="set-always_on_top" class="switch">
+                    </label>
+                </div>
+                <hr class="setting-sep">
+                <div class="pv-head" style="margin-top:14px;">
+                    <span class="pv-title">🧠 模型配置</span>
+                    <span class="pv-sub">各功能模型名 + Key</span>
+                </div>
+                <div id="model-config-list" class="settings-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="utils.js"></script>
+    <script src="common.js"></script>
+    <script src="chat.js"></script>
+    <script src="chatpanels.js"></script>
+</body>
+</html>

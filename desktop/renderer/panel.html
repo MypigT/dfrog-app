@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>桌宠面板</title>
+    <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+    <!-- 历史面板 -->
+    <div id="history-view" class="panel-view">
+        <div class="panel-header">
+            <span>💬 历史对话</span>
+            <button class="panel-close" data-type="history">×</button>
+        </div>
+        <div id="history-list" class="panel-body"></div>
+    </div>
+
+    <!-- 提醒面板 -->
+    <div id="reminder-view" class="panel-view">
+        <div class="panel-header">
+            <span>⏰ 提醒</span>
+            <button class="panel-close" data-type="reminder">×</button>
+        </div>
+        <div id="reminder-input-row">
+            <input type="text" id="reminder-text" placeholder="提醒内容" autocomplete="off">
+            <select id="reminder-delay">
+                <option value="60">1分</option>
+                <option value="300" selected>5分</option>
+                <option value="600">10分</option>
+                <option value="1800">30分</option>
+                <option value="3600">1小时</option>
+            </select>
+        </div>
+        <div id="reminder-add-row"><button id="reminder-add" title="添加">➕ 添加</button></div>
+        <div id="reminder-list" class="panel-body"></div>
+    </div>
+
+    <!-- 速记面板 -->
+    <div id="notes-view" class="panel-view">
+        <div class="panel-header">
+            <span>📝 速记</span>
+            <button class="panel-close" data-type="notes">×</button>
+        </div>
+        <div id="notes-input-row">
+            <input type="text" id="notes-text" placeholder="记点什么..." autocomplete="off">
+            <button id="notes-add" title="保存">➕</button>
+        </div>
+        <div id="notes-summarize-row"><button id="notes-summarize" title="AI 整理">✨ AI整理</button></div>
+        <div id="notes-list" class="panel-body"></div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div id="settings-view" class="panel-view">
+        <div class="panel-header">
+            <span>⚙️ 设置</span>
+            <button class="panel-close" data-type="settings">×</button>
+        </div>
+        <div class="panel-body">
+            <div class="mc-subhead">常用开关</div>
+            <div class="settings-list">
+            <label class="setting-item">
+                <div class="si-text">
+                    <div class="si-name">开机自启动</div>
+                    <div class="si-desc">开机自动启动桌宠</div>
+                </div>
+                <input type="checkbox" id="set-auto_start" class="switch">
+            </label>
+            <label class="setting-item">
+                <div class="si-text">
+                    <div class="si-name">静音</div>
+                    <div class="si-desc">关闭齁齁齁音效</div>
+                </div>
+                <input type="checkbox" id="set-mute" class="switch">
+            </label>
+            <label class="setting-item">
+                <div class="si-text">
+                    <div class="si-name">流式输出</div>
+                    <div class="si-desc">对话逐字流式显示</div>
+                </div>
+                <input type="checkbox" id="set-stream_output" class="switch">
+            </label>
+            <label class="setting-item">
+                <div class="si-text">
+                    <div class="si-name">主动互动</div>
+                    <div class="si-desc">定时主动搭话</div>
+                </div>
+                <input type="checkbox" id="set-proactive" class="switch">
+            </label>
+            <label class="setting-item">
+                <div class="si-text">
+                    <div class="si-name">桌宠置顶</div>
+                    <div class="si-desc">桌宠窗口始终置顶</div>
+                </div>
+                <input type="checkbox" id="set-always_on_top" class="switch">
+            </label>
+            </div>
+            <hr class="setting-sep">
+            <div class="mc-subhead">🧠 模型配置</div>
+            <div id="model-config-list" class="settings-list"></div>
+        </div>
+    </div>
+
+    <!-- 面板窗口（桌宠模式独立窗口）。注：对话模式大窗口已改为原生功能视图，不再 iframe 嵌入本页 -->
+    <script src="common.js"></script>
+    <script src="panel.js"></script>
+</body>
+</html>

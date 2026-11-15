@@ -1,0 +1,19 @@
+{
+  "animations": [
+    {
+      "file": "左右摇摆.png",
+      "name": "左右摇摆",
+      "type": "sway"
+    },
+    {
+      "file": "开心跳跃.png",
+      "name": "开心跳跃",
+      "type": "jump"
+    },
+    {
+      "file": "点头示意.png",
+      "name": "点头示意",
+      "type": "nod"
+    }
+  ]
+}

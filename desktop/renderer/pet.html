@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>桌宠</title>
+    <link rel="stylesheet" href="pet.css">
+</head>
+<body>
+    <div id="pet-container">
+        <!-- 对话气泡：在奶龙头上，新对话往上叠，5 秒后消失 -->
+        <div id="bubble-stack"></div>
+
+        <!-- 确认层：写/命令类操作动手前问过主人（「放行 / 算了」按钮），永远待在奶龙身上不被气泡栈挤走 -->
+        <div id="confirm-layer"></div>
+
+        <!-- 奶龙本体：抓住可拖动窗口（不是拖图片文件） -->
+        <div id="pet-body">
+            <img id="pet" src="../assets/common.jpg" alt="桌宠" draggable="false" style="visibility:hidden">
+        </div>
+
+        <!-- 悬浮工具栏：奶龙两侧各一列、每列 2 个竖排按钮（贴窗边，坐标相对
+             #pet-container=窗口 220×340：左列 x2~30，右列 x190~218；奶龙本体 x62~158，
+             完全不相交）。桌宠模式只留 4 个按钮：💬 对话模式 / ≡ 历史对话（左列）、
+             👀 看屏幕 / × 退出（右列）；智能体/提醒/速记功能区由对话模式内的原生视图提供。
+             工具栏与输入框同一显隐：一起出、一起藏。 -->
+        <div class="pet-btn-col left" id="btn-col">
+            <button class="pet-btn chat" id="chat-btn" title="切换到对话模式">💬</button>
+            <button class="pet-btn history" id="history-btn" title="历史对话">≡</button>
+        </div>
+        <div class="pet-btn-col right" id="btn-col-right">
+            <button class="pet-btn settings" id="settings-btn" title="设置">⚙️</button>
+            <button class="pet-btn eye" id="eye-btn" title="看看屏幕">👀</button>
+            <button class="pet-btn close" id="close-btn" title="关闭桌宠">×</button>
+        </div>
+
+        <!-- 输入框：点击后显现，5 秒不操作自动隐藏；回车发送 -->
+        <div id="input-area">
+            <input type="text" id="input" placeholder="说点什么..." autocomplete="off">
+        </div>
+    </div>
+    <!-- 设置改为独立窗口（同历史对话面板），不在桌宠内塞弹窗 -->
+    <script src="utils.js"></script>
+    <script src="common.js"></script>
+    <script src="pet.js"></script>
+</body>
+</html>

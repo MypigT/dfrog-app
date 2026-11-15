@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 环境变量（含 API Key，绝不能上传）
+.env
+
+# 数据目录：用户产生的聊天历史、数据库、向量库、形象素材、
+# Agent 工作目录等运行时数据，全部不入库（仅保留目录占位）
+data/*
+!data/.gitkeep
+
+# 后端运行时数据（如 agent_root.txt）
+backend/data/
+
+# 冗余样例图片（与 desktop/assets 重复，不入库）
+pic/
+pic2/
+
+# Electron / 构建产物
+node_modules/
+desktop/dist/
+
+# 打包输出与可执行文件（体积大，不入库）
+release/
+build/
+dist/
+*.exe
+*.spec
+
+# 日志与临时文件
+*.log
+Temp/
