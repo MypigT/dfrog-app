@@ -40,9 +40,48 @@
 
 ## 运行
 
-- 开发：`python launcher.py`（自动拉后端 + Electron，改代码重跑即生效，会先杀掉 8000 端口旧后端）
-- 打包：`desktop/` 下 `npm run build`
-- 测试：`.venv/Scripts/python.exe -m unittest tests.test_rag tests.test_history tests.test_agent -v`（核心模块单测，离线可跑）
+> 仓库不包含依赖（`.venv` 和 `node_modules` 已通过 `.gitignore` 排除，避免体积和隐私），**从 Git 克隆后需先装依赖**，否则直接运行会起不来。
+
+### 1. 从 Git 克隆
+
+```bash
+git clone https://github.com/MypigT/dfrog-app.git
+cd dfrog-app
+```
+
+### 2. 安装依赖
+
+**后端依赖**（在项目根目录，创建虚拟环境并按 `requirements.txt` 安装）：
+
+```bash
+python -m venv .venv
+# Windows
+.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
+# macOS / Linux
+source .venv/bin/activate && pip install -r backend/requirements.txt
+```
+
+**Electron 依赖**（在 `desktop/` 目录）：
+
+```bash
+cd desktop
+npm install
+cd ..
+```
+
+### 3. 启动
+
+```bash
+python launcher.py
+```
+
+`launcher.py` 会自动拉起后端（FastAPI，8000 端口）和 Electron 桌宠。改代码后重跑即生效（会先杀掉 8000 端口上的旧后端再启动最新代码）。
+
+### 4. 其他
+
+- **打包**：`desktop/` 下 `npm run build`
+- **测试**：`.venv/Scripts/python.exe -m unittest tests.test_rag tests.test_history tests.test_agent -v`（核心模块单测，离线可跑）
+- **配置模型**：首次运行前，按「配置」一节在 `backend/.env` 填好 API Key，或在对话窗的设置页里改模型名和 Key
 
 ## 文档
 
